@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Retail POS System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --secondary: #10b981;
+      --danger: #ef4444;
+      --dark: #0f172a;
+      --light: #f8fafc;
+      --border: #e2e8f0;
+      --text: #334155;
+      --text-light: #64748b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Battambang', sans-serif; }
+    body { background: var(--light); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Sidebar Navigation */
+    .sidebar { width: 250px; background: var(--dark); color: white; display: flex; flex-direction: column; transition: 0.3s; }
+    .logo { padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; }
+    .nav-links { list-style: none; padding: 15px 0; flex: 1; }
+    .nav-links li { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 15px; color: #cbd5e1; transition: 0.2s; }
+    .nav-links li:hover, .nav-links li.active { background: var(--primary); color: white; }
+    
+    /* Main Content */
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: white; padding: 15px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .topbar-right { display: flex; align-items: center; gap: 15px; }
+    .btn-lang { background: var(--light); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .btn-lang:hover { background: #e2e8f0; }
+    
+    /* Views */
+    .view { display: none; flex: 1; padding: 20px; overflow: hidden; }
+    .view.active { display: flex; gap: 20px; }
+    
+    /* POS View */
+    .pos-products { flex: 2; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+    .search-box { display: flex; gap: 10px; }
+    .search-box input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
+    .search-box input:focus { border-color: var(--primary); }
+    .categories { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .cat-btn { padding: 8px 16px; border: 1px solid var(--border); background: white; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 14px; }
+    .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    .product-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; align-content: start; }
+    .product-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+    .product-card:active { transform: scale(0.96); }
+    .product-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .p-name { font-weight: 600; font-size: 15px; margin: 8px 0; height: 44px; overflow: hidden; }
+    .p-price { color: var(--secondary); font-weight: bold; font-size: 18px; }
+    .p-stock { position: absolute; top: 10px; right: 10px; font-size: 12px; background: var(--light); padding: 2px 6px; border-radius: 4px; color: var(--text-light); }
+
+    /* POS Cart */
+    .pos-cart { flex: 1.2; background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .cart-header { padding: 15px; background: var(--light); border-bottom: 1px solid var(--border); font-weight: bold; }
+    .cart-body { flex: 1; overflow-y: auto; padding: 10px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px dashed var(--border); }
+    .item-info { flex: 1; }
+    .item-info h4 { font-size: 14px; margin-bottom: 4px; }
+    .item-info span { color: var(--text-light); font-size: 13px; }
+    .qty-control { display: flex; align-items: center; gap: 8px; }
+    .qty-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; }
+    .qty-btn:hover { background: var(--light); }
+    
+    .cart-footer { padding: 20px; border-top: 1px solid var(--border); background: var(--light); }
+    .total-line { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 8px; color: var(--text-light); }
+    .grand-total { display: flex; justify-content: space-between; font-size: 22px; font-weight: bold; color: var(--text); margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--border); }
+    .checkout-btn { width: 100%; padding: 15px; background: var(--secondary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .checkout-btn:hover { background: #059669; }
+
+    /* Generic View Styles (Inventory/Reports) */
+    .generic-view { width: 100%; background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--light); font-weight: 600; color: var(--text-light); }
+
+    /* Receipt Print (80mm Thermal Printer) */
+    #receipt { display: none; }
+    @media print {
+      body * { visibility: hidden; }
+      #receipt, #receipt * { visibility: visible; }
+      #receipt { display: block; position: absolute; left: 0; top: 0; width: 80mm; padding: 5mm; font-family: 'Battambang', sans-serif; font-size: 13px; color: black; }
+      .r-header { text-align: center; margin-bottom: 10px; }
+      .r-header h2 { font-size: 18px; margin-bottom: 5px; }
+      .r-line { border-bottom: 1px dashed black; margin: 8px 0; }
+      .r-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+      .r-totals { margin-top: 10px; font-weight: bold; }
+      .r-footer { text-align: center; margin-top: 15px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="logo"><i class="fas fa-store"></i> <span class="t-brand">Smart POS</span></div>
+    <ul class="nav-links">
+      <li class="active" onclick="switchTab('pos')"><i class="fas fa-cash-register"></i> <span class="t-pos">លក់ទំនិញ</span></li>
+      <li onclick="switchTab('inventory')"><i class="fas fa-boxes"></i> <span class="t-inv">គ្រង់គ្រងឃ្លាំង</span></li>
+      <li onclick="switchTab('reports')"><i class="fas fa-chart-line"></i> <span class="t-rep">របាយការណ៍</span></li>
+      <li onclick="switchTab('settings')"><i class="fas fa-cog"></i> <span class="t-set">ការកំណត់</span></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h2 id="view-title" class="t-pos">លក់ទំនិញ (POS)</h2>
+      <div class="topbar-right">
+        <span id="clock" style="font-weight: 600; color: var(--text-light);"></span>
+        <button class="btn-lang" onclick="toggleLanguage()">
+          <i class="fas fa-globe"></i> <span id="lang-label">English</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- POS VIEW -->
+    <div id="view-pos" class="view active">
+      <div class="pos-products">
+        <div class="search-box">
+          <input type="text" id="search" placeholder="ស្វែងរកតាមឈ្មោះ ឬ ស្កេនបាកូដ..." oninput="filterProducts()">
+        </div>
+        <div class="categories" id="categories">
+          <!-- Categories injected by JS -->
+        </div>
+        <div class="product-grid" id="product-grid">
+          <!-- Products injected by JS -->
+        </div>
+      </div>
+      
+      <div class="pos-cart">
+        <div class="cart-header t-cart">បញ្ជីទូទាត់ប្រាក់</div>
+        <div class="cart-body" id="cart-body">
+          <!-- Cart items injected by JS -->
+        </div>
+        <div class="cart-footer">
+          <div class="total-line">
+            <span class="t-sub">សរុបរង / Subtotal</span>
+            <span id="subtotal">$0.00</span>
+          </div>
+          <div class="total-line">
+            <span class="t-tax">ពន្ធ / Tax (0%)</span>
+            <span>$0.00</span>
+          </div>
+          <div class="grand-total">
+            <span class="t-total">សរុបរួម / Total</span>
+            <div>
+              <div id="total-usd">$0.00</div>
+              <div id="total-khr" style="font-size: 15px; color: var(--text-light); text-align: right;">0 ៛</div>
+            </div>
+          </div>
+          <button class="checkout-btn" onclick="checkout()">
+            <i class="fas fa-print"></i> <span class="t-pay">ទូទាត់ & បោះពុម្ព</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY VIEW -->
+    <div id="view-inventory" class="view">
+      <div class="generic-view">
+        <h3 class="t-inv-list">បញ្ជីទំនិញក្នុងឃ្លាំង</h3>
+        <table>
+          <thead>
+            <tr>
+              <th class="t-th-barcode">បាកូដ</th>
+              <th class="t-th-name">ឈ្មោះទំនិញ</th>
+              <th class="t-th-cat">ប្រភេទ</th>
+              <th class="t-th-price">តម្លៃលក់</th>
+              <th class="t-th-stock">ស្តុកមាន</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div id="view-reports" class="view">
+      <div class="generic-view">
+        <h3 class="t-rep-title">របាយការណ៍លក់ប្រចាំថ្ងៃ</h3>
+        <p style="margin-top: 10px; color: var(--text-light);">* ទិន្នន័យព្រាងសម្រាប់បង្ហាញការរចនា (Demo Mode)</p>
+      </div>
+    </div>
+    
+    <!-- SETTINGS VIEW -->
+    <div id="view-settings" class="view">
+      <div class="generic-view">
+        <h3 class="t-set-title">ការកំណត់ប្រព័ន្ធ</h3>
+        <p style="margin-top: 10px; color: var(--text-light);">អត្រាប្តូរប្រាក់បច្ចុប្បន្ន: $1 = 4,100 ៛</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- RECEIPT TEMPLATE (80mm) -->
+  <div id="receipt"></div>
+
+  <script>
+    // --- Data Base (Simulation) ---
+    const EXCHANGE_RATE = 4100;
+    let currentLang = 'km';
+    let currentCategory = 'All';
+    let cart = [];
+
+    const categories = [
+      { id: 'All', km: 'ទាំងអស់', en: 'All Items' },
+      { id: 'Groceries', km: 'គ្រឿងទេស', en: 'Groceries' },
+      { id: 'Beverages', km: 'ភេសជ្ជៈ', en: 'Beverages' },
+      { id: 'Household', km: 'របស់ប្រើប្រាស់', en: 'Household' }
+    ];
+
+    const products = [
+      { id: 1, barcode: '8934567812', nameKm: 'អង្ករផ្កាម្លិះ 5kg', nameEn: 'Jasmine Rice 5kg', cat: 'Groceries', price: 4.50, stock: 120 },
+      { id: 2, barcode: '8934567813', nameKm: 'ប្រេងឆា 1L', nameEn: 'Cooking Oil 1L', cat: 'Groceries', price: 2.20, stock: 85 },
+      { id: 3, barcode: '8934567814', nameKm: 'ទឹកបរិសុទ្ធកេស', nameEn: 'Mineral Water (Case)', cat: 'Beverages', price: 3.50, stock: 50 },
+      { id: 4, barcode: '8934567815', nameKm: 'កូកាកូឡា 1 កេស', nameEn: 'Coca Cola (Case)', cat: 'Beverages', price: 12.00, stock: 30 },
+      { id: 5, barcode: '8934567816', nameKm: 'សាប៊ូបោកខោអាវ 3kg', nameEn: 'Laundry Detergent 3kg', cat: 'Household', price: 6.50, stock: 45 },
+      { id: 6, barcode: '8934567817', nameKm: 'ក្រដាសអនាម័យ', nameEn: 'Toilet Paper (Pack)', cat: 'Household', price: 3.00, stock: 200 }
+    ];
+
+    const dict = {
+      km: {
+        't-pos': 'លក់ទំនិញ (POS)', 't-inv': 'គ្រង់គ្រងឃ្លាំង', 't-rep': 'របាយការណ៍', 't-set': 'ការកំណត់',
+        't-cart': 'បញ្ជីទូទាត់ប្រាក់', 't-sub': 'សរុបរង', 't-tax': 'ពន្ធអាករ (0%)', 't-total': 'សរុបរួម', 't-pay': 'ទូទាត់ & បោះពុម្ព',
+        'search': 'ស្វែងរកតាមឈ្មោះ ឬ ស្កេនបាកូដ...', 'lang': 'English',
+        't-inv-list': 'បញ្ជីទំនិញក្នុងឃ្លាំង', 't-th-barcode': 'បាកូដ', 't-th-name': 'ឈ្មោះទំនិញ', 't-th-cat': 'ប្រភេទ', 't-th-price': 'តម្លៃលក់', 't-th-stock': 'ស្តុកមាន',
+        't-rep-title': 'របាយការណ៍លក់ប្រចាំថ្ងៃ', 't-set-title': 'ការកំណត់ប្រព័ន្ធ'
+      },
+      en: {
+        't-pos': 'Point of Sale', 't-inv': 'Inventory', 't-rep': 'Reports', 't-set': 'Settings',
+        't-cart': 'Shopping Cart', 't-sub': 'Subtotal', 't-tax': 'Tax (0%)', 't-total': 'Grand Total', 't-pay': 'Checkout & Print',
+        'search': 'Search by name or scan barcode...', 'lang': 'ភាសាខ្មែរ',
+        't-inv-list': 'Inventory Stock List', 't-th-barcode': 'Barcode', 't-th-name': 'Product Name', 't-th-cat': 'Category', 't-th-price': 'Price', 't-th-stock': 'In Stock',
+        't-rep-title': 'Daily Sales Report', 't-set-title': 'System Settings'
+      }
+    };
+
+    // --- Core Functions ---
+    function init() {
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderCategories();
+      renderProducts();
+      renderInventory();
+      applyLang();
+      
+      document.getElementById('search').focus();
+    }
+
+    function updateClock() {
+      document.getElementById('clock').textContent = new Date().toLocaleString('en-GB');
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('view-' + tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+      
+      const titleKey = tabId === 'pos' ? 't-pos' : tabId === 'inventory' ? 't-inv' : tabId === 'reports' ? 't-rep' : 't-set';
+      document.getElementById('view-title').textContent = dict[currentLang][titleKey];
+      
+      if(tabId === 'pos') document.getElementById('search').focus();
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'km' ? 'en' : 'km';
+      applyLang();
+      renderCategories();
+      renderProducts();
+      renderCart();
+      renderInventory();
+    }
+
+    function applyLang() {
+      const d = dict[currentLang];
+      document.querySelectorAll('.t-pos').forEach(el => el.textContent = d['t-pos']);
+      document.querySelector('.t-inv').textContent = d['t-inv'];
+      document.querySelector('.t-rep').textContent = d['t-rep'];
+      document.querySelector('.t-set').textContent = d['t-set'];
+      document.querySelector('.t-cart').textContent = d['t-cart'];
+      document.querySelector('.t-sub').textContent = d['t-sub'];
+      document.querySelector('.t-tax').textContent = d['t-tax'];
+      document.querySelector('.t-total').textContent = d['t-total'];
+      document.querySelector('.t-pay').textContent = d['t-pay'];
+      document.getElementById('search').placeholder = d['search'];
+      document.getElementById('lang-label').textContent = d['lang'];
+      
+      document.querySelector('.t-inv-list').textContent = d['t-inv-list'];
+      document.querySelector('.t-th-barcode').textContent = d['t-th-barcode'];
+      document.querySelector('.t-th-name').textContent = d['t-th-name'];
+      document.querySelector('.t-th-cat').textContent = d['t-th-cat'];
+      document.querySelector('.t-th-price').textContent = d['t-th-price'];
+      document.querySelector('.t-th-stock').textContent = d['t-th-stock'];
+      document.querySelector('.t-rep-title').textContent = d['t-rep-title'];
+      document.querySelector('.t-set-title').textContent = d['t-set-title'];
+    }
+
+    function renderCategories() {
+      const catDiv = document.getElementById('categories');
+      catDiv.innerHTML = categories.map(c => {
+        const name = currentLang === 'km' ? c.km : c.en;
+        const active = currentCategory === c.id ? 'active' : '';
+        return `<button class="cat-btn ${active}" onclick="setCategory('${c.id}')">${name}</button>`;
+      }).join('');
+    }
+
+    function setCategory(id) {
+      currentCategory = id;
+      renderCategories();
+      renderProducts();
+    }
+
+    function filterProducts() {
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const grid = document.getElementById('product-grid');
+      
+      const filtered = products.filter(p => {
+        const matchCat = currentCategory === 'All' || p.cat === currentCategory;
+        const matchSearch = p.nameKm.toLowerCase().includes(query) || p.nameEn.toLowerCase().includes(query) || p.barcode.includes(query);
+        return matchCat && matchSearch;
+      });
+
+      grid.innerHTML = filtered.map(p => {
+        const name = currentLang === 'km' ? p.nameKm : p.nameEn;
+        return `
+          <div class="product-card" onclick="addToCart(${p.id})">
+            <div class="p-stock">${p.stock}</div>
+            <div class="p-name">${name}</div>
+            <div class="p-price">$${p.price.toFixed(2)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addToCart(id) {
+      const prod = products.find(p => p.id === id);
+      const existing = cart.find(c => c.id === id);
+      
+      if (existing) {
+        if(existing.qty < prod.stock) existing.qty++;
+      } else {
+        cart.push({ ...prod, qty: 1 });
+      }
+      
+      document.getElementById('search').value = ''; 
+      renderProducts();
+      renderCart();
+    }
+
+    function updateQty(id, delta) {
+      const item = cart.find(c => c.id === id);
+      const prod = products.find(p => p.id === id);
+      if(!item) return;
+      
+      item.qty += delta;
+      if (item.qty <= 0) cart = cart.filter(c => c.id !== id);
+      else if (item.qty > prod.stock) item.qty = prod.stock;
+      
+      renderCart();
+    }
+
+    function renderCart() {
+      const body = document.getElementById('cart-body');
+      let total = 0;
+
+      body.innerHTML = cart.map(item => {
+        const name = currentLang === 'km' ? item.nameKm : item.nameEn;
+        const sub = item.price * item.qty;
+        total += sub;
+        return `
+          <div class="cart-item">
+            <div class="item-info">
+              <h4>${name}</h4>
+              <span>$${item.price.toFixed(2)} / ${currentLang==='km'?'ឯកតា':'unit'}</span>
+            </div>
+            <div class="qty-control">
+              <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+              <span style="width: 20px; text-align: center; font-weight: bold;">${item.qty}</span>
+              <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+            </div>
+            <div style="font-weight: bold; width: 60px; text-align: right;">$${sub.toFixed(2)}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('subtotal').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('total-usd').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('total-khr').textContent = `${(total * EXCHANGE_RATE).toLocaleString()} ៛`;
+    }
+
+    function renderInventory() {
+      const tbody = document.getElementById('inventory-body');
+      tbody.innerHTML = products.map(p => {
+        const name = currentLang === 'km' ? p.nameKm : p.nameEn;
+        const cat = categories.find(c => c.id === p.cat)[currentLang];
+        return `
+          <tr>
+            <td style="font-family: monospace;">${p.barcode}</td>
+            <td style="font-weight: 500;">${name}</td>
+            <td>${cat}</td>
+            <td>$${p.price.toFixed(2)}</td>
+            <td><span style="background: ${p.stock < 50 ? '#fee2e2' : '#dcfce7'}; color: ${p.stock < 50 ? '#ef4444' : '#16a34a'}; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${p.stock}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function checkout() {
+      if (cart.length === 0) return;
+      
+      const totalUsd = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const title = currentLang === 'km' ? 'វិក្កយបត្រលក់ / RECEIPT' : 'SALES RECEIPT';
+      const thankYou = currentLang === 'km' ? 'សូមអរគុណ! / Thank You!' : 'Thank you for your business!';
+      
+      const itemsHtml = cart.map(i => {
+        const name = currentLang === 'km' ? i.nameKm : i.nameEn;
+        return `<div class="r-item"><span>${name} x${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`;
+      }).join('');
+
+      document.getElementById('receipt').innerHTML = `
+        <div class="r-header">
+          <h2>SUPERMARKET POS</h2>
+          <div>${title}</div>
+          <div style="font-size: 11px;">កាលបរិច្ឆេទ: ${new Date().toLocaleString('en-GB')}</div>
+        </div>
+        <div class="r-line"></div>
+        ${itemsHtml}
+        <div class="r-line"></div>
+        <div class="r-totals">
+          <div class="r-item"><span>TOTAL (USD):</span><span>$${totalUsd.toFixed(2)}</span></div>
+          <div class="r-item"><span>TOTAL (KHR):</span><span>${(totalUsd * EXCHANGE_RATE).toLocaleString()} ៛</span></div>
+        </div>
+        <div class="r-line"></div>
+        <div class="r-footer">${thankYou}<br>Barcode: #INV-${Math.floor(Math.random()*100000)}</div>
+      `;
+
+      cart.forEach(cItem => {
+        const p = products.find(p => p.id === cItem.id);
+        if(p) p.stock -= cItem.qty;
+      });
+
+      window.print();
+      cart = [];
+      renderCart();
+      renderProducts();
+      renderInventory();
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
